@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion : '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: Master data management for contracts
+
+Globals:
+  Function:
+    Tags:
+      CostCenter: Tecco
+      Owner: dschmitz
+
+Parameters:
+  NamePrefix:
+    Type: String
+    Default: "Fis2_0-Contract-"
+
+Resources:
+  GetContractRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub "${NamePrefix}GetContractRole"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          Effect: "Allow"
+          Principal:
+            Service:
+              - lambda.amazonaws.com
+          Action:
+            - sts:AssumeRole
+      ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/AWSLambdaExecute
+          - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
+          - arn:aws:iam::604370441254:policy/Fis2_0-Employees-GetContractPolicy
+
+  GetContractByEmployee:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: nodejs6.10
+      Timeout: 3
+      MemorySize: 128
+      FunctionName: !Sub "${NamePrefix}GetContractByEmployee"
+      Description: "Get contract for an employee"
+      CodeUri: .
+      Handler: index.getContractByEmployee
+      Role: !GetAtt GetContractRole.Arn
+      Tracing: Active
+      Events:
+        GetEmployee:
+          Type: Api
+          Properties:
+            Path: /employee/{id}/contract
+            Method: get
