@@ -1,7 +1,8 @@
 const Joi = require('joi')
 
-const getContract = require('./src/get_contract')
-const ResponseHelpers = require('./src/response_helpers')
+const getContract = require('./src/getContract')
+const dismissContract = require('./src/dismissContract')
+const ResponseHelpers = require('./src/responseHelpers')
 
 module.exports = {
   getContractByEmployee({ pathParameters }, context, callback) {
@@ -9,9 +10,22 @@ module.exports = {
       'id': Joi.string()
     }
 
-    const result = Joi.validate(pathParameters, schema)
-                      .then(id => getContract(id))
+    Joi.validate(pathParameters, schema)
+       .then(id => getContract(id))
+       .then(result => callback(null, ResponseHelpers.buildResponse(result)))
+       .catch(e => callback(e))
+  },
+  dismiss({ pathParameters }, context, callback) {
+    const schema = {
+      'employeeId': Joi.string(),
+      'id': Joi.string()
+    }
 
-    ResponseHelpers.buildResponse(result, callback)
+    Joi.validate(pathParameters, schema)
+       .then(({id, employeeId}) => dismissContract({ id, employeeId }))
+       .then(result => callback(null, ResponseHelpers.buildResponse(result)))
+       .catch(e => {
+          callback(null, ResponseHelpers.prepareErrorResponse(e))
+      })
   }
 }

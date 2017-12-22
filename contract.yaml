@@ -33,6 +33,25 @@ Resources:
           - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
           - arn:aws:iam::604370441254:policy/Fis2_0-Employees-GetContractPolicy
 
+  DismissContractRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub "${NamePrefix}DismissContractRole"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          Effect: "Allow"
+          Principal:
+            Service:
+              - lambda.amazonaws.com
+          Action:
+            - sts:AssumeRole
+      ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/AWSLambdaExecute
+          - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
+          - arn:aws:iam::604370441254:policy/Fis2_0-Employees-DismissContractPolicy
+          - arn:aws:iam::604370441254:policy/Fis2_0-Employees-GetContractPolicy
+
   GetContractByEmployee:
     Type: AWS::Serverless::Function
     Properties:
@@ -51,3 +70,22 @@ Resources:
           Properties:
             Path: /employee/{id}/contract
             Method: get
+
+  DismissContract:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: nodejs6.10
+      Timeout: 3
+      MemorySize: 128
+      FunctionName: !Sub "${NamePrefix}DismissContract"
+      Description: "Terminates a contract"
+      CodeUri: .
+      Handler: index.dismiss
+      Role: !GetAtt DismissContractRole.Arn
+      Tracing: Active
+      Events:
+        GetEmployee:
+          Type: Api
+          Properties:
+            Path: /contract/{id}/dismissal
+            Method: post

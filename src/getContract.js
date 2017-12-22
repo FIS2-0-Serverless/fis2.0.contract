@@ -1,5 +1,3 @@
-const contracts = require('./contracts')
-
 const getContractsByEmployeeId = require('./db').getContractsByEmployeeId
 
 const getContract = ({ id }) => {
